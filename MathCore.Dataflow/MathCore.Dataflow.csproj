@@ -4,6 +4,8 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>System.Threading.Tasks.Dataflow</RootNamespace>
     <LangVersion>9</LangVersion>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>MathCore.Dataflow.key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
