@@ -208,6 +208,110 @@ public static class DataFlow
         out Task TransformCompletion) =>
         source.Joiner.Select(transform, out TransformCompletion);
 
+    /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
+    /// <typeparam name="TSource">Тип элементов входного потока</typeparam>
+    /// <typeparam name="TResult">Тип элементов выходного потока</typeparam>
+    /// <param name="source">Поток-источник</param>
+    /// <param name="selector">Метод формирования набора элементов на основе каждого из элементов входного потока</param>
+    /// <returns>Связь с созданным преобразователем</returns>
+    public static Link<TSource, TransformManyBlock<TSource, TResult>> SelectMany<TSource, TResult>(
+        this ISourceBlock<TSource> source,
+        Func<TSource, IEnumerable<TResult>> selector) =>
+        source.SetLinkTo(new TransformManyBlock<TSource, TResult>(selector));
+
+    /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
+    /// <typeparam name="TSource">Тип элементов входного потока</typeparam>
+    /// <typeparam name="TResult">Тип элементов выходного потока</typeparam>
+    /// <typeparam name="TSourceBlock">Тип потока-источника</typeparam>
+    /// <param name="source">Поток-источник</param>
+    /// <param name="selector">Метод формирования набора элементов на основе каждого из элементов входного потока</param>
+    /// <returns>Связь с созданным преобразователем</returns>
+    public static Link<TSource, TransformManyBlock<TSource, TResult>> SelectMany<TSource, TSourceBlock, TResult>(
+        this Link<TSource, TSourceBlock> source,
+        Func<TSource, IEnumerable<TResult>> selector) 
+        where TSourceBlock : ITargetBlock<TSource>, ISourceBlock<TSource> =>
+        source.Result.SetLinkTo(new TransformManyBlock<TSource, TResult>(selector));
+
+    /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
+    /// <typeparam name="T1">Тип данных первого потока</typeparam>
+    /// <typeparam name="T2">Тип данных второго потока</typeparam>
+    /// <typeparam name="TResult">Тип элементов выходного потока</typeparam>
+    /// <param name="source">Поток-источник</param>
+    /// <param name="selector">Метод формирования набора элементов на основе каждого из элементов входного потока</param>
+    /// <returns>Связь с созданным преобразователем</returns>
+    public static Link<Tuple<T1, T2>, TransformManyBlock<Tuple<T1, T2>, TResult>> SelectMany<T1, T2, TResult>(
+        this JoinBlockLink<T1, T2> source,
+        Func<Tuple<T1, T2>, IEnumerable<TResult>> selector) =>
+        source.Joiner.SetLinkTo(new TransformManyBlock<Tuple<T1, T2>, TResult>(selector));
+
+    /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
+    /// <typeparam name="T1">Тип данных первого потока</typeparam>
+    /// <typeparam name="T2">Тип данных второго потока</typeparam>
+    /// <typeparam name="TResult">Тип элементов выходного потока</typeparam>
+    /// <param name="source">Поток-источник</param>
+    /// <param name="selector">Метод формирования набора элементов на основе каждого из элементов входного потока</param>
+    /// <returns>Связь с созданным преобразователем</returns>
+    public static Link<Tuple<IList<T1>, IList<T2>>, TransformManyBlock<Tuple<IList<T1>, IList<T2>>, TResult>> SelectMany<T1, T2, TResult>(
+        this BatchedJoinBlockLink<T1, T2> source,
+        Func<Tuple<IList<T1>, IList<T2>>, IEnumerable<TResult>> selector) =>
+        source.Joiner.SetLinkTo(new TransformManyBlock<Tuple<IList<T1>, IList<T2>>, TResult>(selector));
+
+    /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
+    /// <typeparam name="TSource">Тип элементов входного потока</typeparam>
+    /// <typeparam name="TResult">Тип элементов выходного потока</typeparam>
+    /// <param name="source">Поток-источник</param>
+    /// <param name="selector">Метод формирования набора элементов на основе каждого из элементов входного потока</param>
+    /// <param name="TransformCompletion">Задача, завершаемая при завершении обработки данных в потоке-результата</param>
+    /// <returns>Связь с созданным преобразователем</returns>
+    public static Link<TSource, TransformManyBlock<TSource, TResult>> SelectMany<TSource, TResult>(
+        this ISourceBlock<TSource> source,
+        Func<TSource, IEnumerable<TResult>> selector,
+        out Task TransformCompletion) =>
+        source.SetLinkTo(new TransformManyBlock<TSource, TResult>(selector), out TransformCompletion);
+
+    /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
+    /// <typeparam name="TSource">Тип элементов входного потока</typeparam>
+    /// <typeparam name="TResult">Тип элементов выходного потока</typeparam>
+    /// <typeparam name="TSourceBlock">Тип потока-источника</typeparam>
+    /// <param name="source">Поток-источник</param>
+    /// <param name="selector">Метод формирования набора элементов на основе каждого из элементов входного потока</param>
+    /// <param name="TransformCompletion">Задача, завершаемая при завершении обработки данных в потоке-результата</param>
+    /// <returns>Связь с созданным преобразователем</returns>
+    public static Link<TSource, TransformManyBlock<TSource, TResult>> SelectMany<TSource, TSourceBlock, TResult>(
+        this Link<TSource, TSourceBlock> source,
+        Func<TSource, IEnumerable<TResult>> selector,
+        out Task TransformCompletion)
+        where TSourceBlock : ITargetBlock<TSource>, ISourceBlock<TSource> =>
+        source.Result.SetLinkTo(new TransformManyBlock<TSource, TResult>(selector), out TransformCompletion);
+
+    /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
+    /// <typeparam name="T1">Тип данных первого потока</typeparam>
+    /// <typeparam name="T2">Тип данных второго потока</typeparam>
+    /// <typeparam name="TResult">Тип элементов выходного потока</typeparam>
+    /// <param name="source">Поток-источник</param>
+    /// <param name="selector">Метод формирования набора элементов на основе каждого из элементов входного потока</param>
+    /// <param name="TransformCompletion">Задача, завершаемая при завершении обработки данных в потоке-результата</param>
+    /// <returns>Связь с созданным преобразователем</returns>
+    public static Link<Tuple<T1, T2>, TransformManyBlock<Tuple<T1, T2>, TResult>> SelectMany<T1, T2, TResult>(
+        this JoinBlockLink<T1, T2> source,
+        Func<Tuple<T1, T2>, IEnumerable<TResult>> selector,
+        out Task TransformCompletion) =>
+        source.Joiner.SetLinkTo(new TransformManyBlock<Tuple<T1, T2>, TResult>(selector), out TransformCompletion);
+
+    /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
+    /// <typeparam name="T1">Тип данных первого потока</typeparam>
+    /// <typeparam name="T2">Тип данных второго потока</typeparam>
+    /// <typeparam name="TResult">Тип элементов выходного потока</typeparam>
+    /// <param name="source">Поток-источник</param>
+    /// <param name="selector">Метод формирования набора элементов на основе каждого из элементов входного потока</param>
+    /// <param name="TransformCompletion">Задача, завершаемая при завершении обработки данных в потоке-результата</param>
+    /// <returns>Связь с созданным преобразователем</returns>
+    public static Link<Tuple<IList<T1>, IList<T2>>, TransformManyBlock<Tuple<IList<T1>, IList<T2>>, TResult>> SelectMany<T1, T2, TResult>(
+        this BatchedJoinBlockLink<T1, T2> source,
+        Func<Tuple<IList<T1>, IList<T2>>, IEnumerable<TResult>> selector,
+        out Task TransformCompletion) =>
+        source.Joiner.SetLinkTo(new TransformManyBlock<Tuple<IList<T1>, IList<T2>>, TResult>(selector), out TransformCompletion);
+
     /// <summary>Объединение элементов потока в пакеты указанного размера</summary>
     /// <typeparam name="T">Тип элементов потока</typeparam>
     /// <param name="source">Поток-источник данных</param>
