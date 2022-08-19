@@ -6,7 +6,7 @@ public static class DataFlow
     /// <summary>Инициализация обычного буферезированного потока</summary>
     /// <typeparam name="T">Тип элементов потока</typeparam>
     /// <returns>Новый экземпляр <see cref="BufferBlock{T}"/></returns>
-    public static Link<T, BufferBlock<T>> PipeLine<T>() => new();
+    public static BufferBlock<T> PipeLine<T>() => new();
 
     /// <summary>Инициализация обычного буферезированного потока</summary>
     /// <typeparam name="T">Тип элементов потока</typeparam>
