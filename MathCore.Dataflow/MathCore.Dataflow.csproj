@@ -2,6 +2,47 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>System.Threading.Tasks.Dataflow</RootNamespace>
+    <LangVersion>preview</LangVersion>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>MathCore.Dataflow.key.snk</AssemblyOriginatorKeyFile>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <Version>0.0.0</Version>
+    <PackageReleaseNotes>
+      Старт пакета
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Authors>Shmachilin P.A.</Authors>
+    <PackageProjectUrl>github.com/infarh/mathcore.dataflow</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/infarh/mathcore.dataflow.git</RepositoryUrl>
+    <Description>Библиотека расширения для пакета System.Threading.Tasks.Dataflow</Description>
+    <PackageTags>threadong;dataflow;TPL</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <Copyright>shmachilin@gmail.com</Copyright>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>MathCore.Dataflow.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="6.0.0" />
+  </ItemGroup>
 
 </Project>
