@@ -10,9 +10,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>0.0.1.1</Version>
+    <Version>0.0.2</Version>
     <PackageReleaseNotes>
-      Добавление преобразования SelectMany
+      Расширение fluent-интерфейса на асинхронные операции
     </PackageReleaseNotes>
   </PropertyGroup>
 
