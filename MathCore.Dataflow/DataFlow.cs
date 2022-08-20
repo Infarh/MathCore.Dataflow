@@ -42,7 +42,7 @@ public static class DataFlow
     /// <summary>Связь между потоками, которую можно разорвать вызвав метод <see cref="Dispose()"/></summary>
     /// <typeparam name="TItem">Тип элементов потока</typeparam>
     /// <typeparam name="T">Тип потока, с которым выполнена связь</typeparam>
-    public readonly ref struct Link<TItem, T> where T : ITargetBlock<TItem>
+    public readonly ref struct Link<TItem, T>
     {
         /// <summary>
         /// Объект, обеспечивающий при вызове метода <see cref="IDisposable"/>.<see cref="IDisposable.Dispose()"/>
@@ -71,49 +71,20 @@ public static class DataFlow
         public static implicit operator T(Link<TItem, T> link) => link.Result;
     }
 
-    /// <summary>Формирование соединения потока-источника с потоком-результата</summary>
-    /// <typeparam name="TOutput">Тип элементов потока-результата</typeparam>
-    /// <typeparam name="T">Тип элементов потока-источника</typeparam>
-    /// <param name="source">Исходный потока из которого формируется соединение</param>
-    /// <param name="result">Поток-приёмник, формирующий результат обработки данных</param>
-    /// <returns>Поток-приёмник к которому выполнено соединение</returns>
-    private static Link<TOutput, T> SetLinkTo<TOutput, T>(
-        this ISourceBlock<TOutput> source,
-        T result)
-        where T : ITargetBlock<TOutput>
-    {
-        var unsubscriber = source.LinkTo(result, new DataflowLinkOptions { PropagateCompletion = true });
-        return new(unsubscriber, result);
-    }
-
-    /// <summary>Формирование соединения потока-источника с потоком-результата</summary>
-    /// <typeparam name="TOutput">Тип элементов потока-результата</typeparam>
-    /// <typeparam name="T">Тип элементов потока-источника</typeparam>
-    /// <param name="source">Исходный потока из которого формируется соединение</param>
-    /// <param name="result">Поток-приёмник, формирующий результат обработки данных</param>
-    /// <param name="Completion">Задача, завершаемая при завершении обработки данных в потоке-результата</param>
-    /// <returns>Поток-приёмник к которому выполнено соединение</returns>
-    private static Link<TOutput, T> SetLinkTo<TOutput, T>(
-        this ISourceBlock<TOutput> source,
-        T result,
-        out Task Completion)
-        where T : ITargetBlock<TOutput>
-    {
-        var unsubscriber = source.LinkTo(result, new DataflowLinkOptions { PropagateCompletion = true });
-        Completion = source.Completion;
-        return new(unsubscriber, result);
-    }
-
     /// <summary>Преобразование входных данных из потока-источника</summary>
     /// <typeparam name="TSource">Тип элементов потока-источника</typeparam>
     /// <typeparam name="TResult">Тип элементов потока-результата</typeparam>
     /// <param name="source">Поток-источник</param>
     /// <param name="transform">Метод формирования элементов потока-результата на основе элементов потока-источника</param>
     /// <returns>Связь, установленная между исходным потоком-источником данных с новым потоком преобразованных денных</returns>
-    public static Link<TSource, TransformBlock<TSource, TResult>> Select<TSource, TResult>(
+    public static Link<TResult, TransformBlock<TSource, TResult>> Select<TSource, TResult>(
         this ISourceBlock<TSource> source,
-        Func<TSource, TResult> transform) =>
-        source.SetLinkTo(new TransformBlock<TSource, TResult>(transform));
+        Func<TSource, TResult> transform)
+    {
+        var transformer = new TransformBlock<TSource, TResult>(transform);
+        var unsubscriber = source.LinkTo(transformer);
+        return new(unsubscriber, transformer);
+    }
 
     /// <summary>Преобразование входных данных из потока-источника</summary>
     /// <typeparam name="TSource">Тип элементов потока-источника</typeparam>
@@ -122,10 +93,10 @@ public static class DataFlow
     /// <param name="source">Поток-источник</param>
     /// <param name="transform">Метод формирования элементов потока-результата на основе элементов потока-источника</param>
     /// <returns>Связь, установленная между исходным потоком-источником данных с новым потоком преобразованных денных</returns>
-    public static Link<TSource, TransformBlock<TSource, TResult>> Select<TSource, TSourceBlock, TResult>(
+    public static Link<TResult, TransformBlock<TSource, TResult>> Select<TSource, TSourceBlock, TResult>(
         this Link<TSource, TSourceBlock> source,
         Func<TSource, TResult> transform) 
-        where TSourceBlock : ITargetBlock<TSource>, ISourceBlock<TSource> =>
+        where TSourceBlock : ISourceBlock<TSource> =>
         source.Result.Select(transform);
 
     /// <summary>Преобразование входных данных из потока-источника</summary>
@@ -135,7 +106,7 @@ public static class DataFlow
     /// <param name="source">Поток-источник</param>
     /// <param name="transform">Метод формирования элементов потока-результата на основе элементов потока-источника</param>
     /// <returns>Связь, установленная между исходным потоком-источником данных с новым потоком преобразованных денных</returns>
-    public static Link<Tuple<T1, T2>, TransformBlock<Tuple<T1, T2>, TResult>> Select<T1, T2, TResult>(
+    public static Link<TResult, TransformBlock<Tuple<T1, T2>, TResult>> Select<T1, T2, TResult>(
         this JoinBlockLink<T1, T2> source,
         Func<Tuple<T1, T2>, TResult> transform) =>
         source.Joiner.Select(transform);
@@ -147,7 +118,7 @@ public static class DataFlow
     /// <param name="source">Поток-источник</param>
     /// <param name="transform">Метод формирования элементов потока-результата на основе элементов потока-источника</param>
     /// <returns>Связь, установленная между исходным потоком-источником данных с новым потоком преобразованных денных</returns>
-    public static Link<Tuple<IList<T1>, IList<T2>>, TransformBlock<Tuple<IList<T1>, IList<T2>>, TResult>> Select<T1, T2, TResult>(
+    public static Link<TResult, TransformBlock<Tuple<IList<T1>, IList<T2>>, TResult>> Select<T1, T2, TResult>(
         this BatchedJoinBlockLink<T1, T2> source,
         Func<Tuple<IList<T1>, IList<T2>>, TResult> transform) =>
         source.Joiner.Select(transform);
@@ -159,11 +130,16 @@ public static class DataFlow
     /// <param name="transform">Метод формирования элементов потока-результата на основе элементов потока-источника</param>
     /// <param name="TransformCompletion">Задача, завершаемая при завершении обработки данных в потоке-результата</param>
     /// <returns>Связь, установленная между исходным потоком-источником данных с новым потоком преобразованных денных</returns>
-    public static Link<TSource, TransformBlock<TSource, TResult>> Select<TSource, TResult>(
+    public static Link<TResult, TransformBlock<TSource, TResult>> Select<TSource, TResult>(
         this ISourceBlock<TSource> source,
         Func<TSource, TResult> transform,
-        out Task TransformCompletion) =>
-        source.SetLinkTo(new TransformBlock<TSource, TResult>(transform), out TransformCompletion);
+        out Task TransformCompletion)
+    {
+        var transformer = new TransformBlock<TSource, TResult>(transform);
+        var unsubscriber = source.LinkTo(transformer);
+        TransformCompletion = transformer.Completion;
+        return new(unsubscriber, transformer);
+    }
 
     /// <summary>Преобразование входных данных из потока-источника</summary>
     /// <typeparam name="TSource">Тип элементов потока-источника</typeparam>
@@ -173,7 +149,7 @@ public static class DataFlow
     /// <param name="transform">Метод формирования элементов потока-результата на основе элементов потока-источника</param>
     /// <param name="TransformCompletion">Задача, завершаемая при завершении обработки данных в потоке-результата</param>
     /// <returns>Связь, установленная между исходным потоком-источником данных с новым потоком преобразованных денных</returns>
-    public static Link<TSource, TransformBlock<TSource, TResult>> Select<TSource, TSourceBlock, TResult>(
+    public static Link<TResult, TransformBlock<TSource, TResult>> Select<TSource, TSourceBlock, TResult>(
         this Link<TSource, TSourceBlock> source,
         Func<TSource, TResult> transform,
         out Task TransformCompletion)
@@ -188,7 +164,7 @@ public static class DataFlow
     /// <param name="transform">Метод формирования элементов потока-результата на основе элементов потока-источника</param>
     /// <param name="TransformCompletion">Задача, завершаемая при завершении обработки данных в потоке-результата</param>
     /// <returns>Связь, установленная между исходным потоком-источником данных с новым потоком преобразованных денных</returns>
-    public static Link<Tuple<T1, T2>, TransformBlock<Tuple<T1, T2>, TResult>> Select<T1, T2, TResult>(
+    public static Link<TResult, TransformBlock<Tuple<T1, T2>, TResult>> Select<T1, T2, TResult>(
         this JoinBlockLink<T1, T2> source,
         Func<Tuple<T1, T2>, TResult> transform,
         out Task TransformCompletion) =>
@@ -202,7 +178,7 @@ public static class DataFlow
     /// <param name="transform">Метод формирования элементов потока-результата на основе элементов потока-источника</param>
     /// <param name="TransformCompletion">Задача, завершаемая при завершении обработки данных в потоке-результата</param>
     /// <returns>Связь, установленная между исходным потоком-источником данных с новым потоком преобразованных денных</returns>
-    public static Link<Tuple<IList<T1>, IList<T2>>, TransformBlock<Tuple<IList<T1>, IList<T2>>, TResult>> Select<T1, T2, TResult>(
+    public static Link<TResult, TransformBlock<Tuple<IList<T1>, IList<T2>>, TResult>> Select<T1, T2, TResult>(
         this BatchedJoinBlockLink<T1, T2> source,
         Func<Tuple<IList<T1>, IList<T2>>, TResult> transform,
         out Task TransformCompletion) =>
@@ -214,10 +190,14 @@ public static class DataFlow
     /// <param name="source">Поток-источник</param>
     /// <param name="selector">Метод формирования набора элементов на основе каждого из элементов входного потока</param>
     /// <returns>Связь с созданным преобразователем</returns>
-    public static Link<TSource, TransformManyBlock<TSource, TResult>> SelectMany<TSource, TResult>(
+    public static Link<TResult, TransformManyBlock<TSource, TResult>> SelectMany<TSource, TResult>(
         this ISourceBlock<TSource> source,
-        Func<TSource, IEnumerable<TResult>> selector) =>
-        source.SetLinkTo(new TransformManyBlock<TSource, TResult>(selector));
+        Func<TSource, IEnumerable<TResult>> selector)
+    {
+        var transformer = new TransformManyBlock<TSource, TResult>(selector);
+        var unsubscriber = source.LinkTo(transformer);
+        return new(unsubscriber, transformer);
+    }
 
     /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
     /// <typeparam name="TSource">Тип элементов входного потока</typeparam>
@@ -226,11 +206,11 @@ public static class DataFlow
     /// <param name="source">Поток-источник</param>
     /// <param name="selector">Метод формирования набора элементов на основе каждого из элементов входного потока</param>
     /// <returns>Связь с созданным преобразователем</returns>
-    public static Link<TSource, TransformManyBlock<TSource, TResult>> SelectMany<TSource, TSourceBlock, TResult>(
+    public static Link<TResult, TransformManyBlock<TSource, TResult>> SelectMany<TSource, TSourceBlock, TResult>(
         this Link<TSource, TSourceBlock> source,
         Func<TSource, IEnumerable<TResult>> selector) 
         where TSourceBlock : ITargetBlock<TSource>, ISourceBlock<TSource> =>
-        source.Result.SetLinkTo(new TransformManyBlock<TSource, TResult>(selector));
+        source.Result.SelectMany(selector);
 
     /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
     /// <typeparam name="T1">Тип данных первого потока</typeparam>
@@ -239,10 +219,14 @@ public static class DataFlow
     /// <param name="source">Поток-источник</param>
     /// <param name="selector">Метод формирования набора элементов на основе каждого из элементов входного потока</param>
     /// <returns>Связь с созданным преобразователем</returns>
-    public static Link<Tuple<T1, T2>, TransformManyBlock<Tuple<T1, T2>, TResult>> SelectMany<T1, T2, TResult>(
+    public static Link<TResult, TransformManyBlock<Tuple<T1, T2>, TResult>> SelectMany<T1, T2, TResult>(
         this JoinBlockLink<T1, T2> source,
-        Func<Tuple<T1, T2>, IEnumerable<TResult>> selector) =>
-        source.Joiner.SetLinkTo(new TransformManyBlock<Tuple<T1, T2>, TResult>(selector));
+        Func<Tuple<T1, T2>, IEnumerable<TResult>> selector)
+    {
+        var transformer = new TransformManyBlock<Tuple<T1, T2>, TResult>(selector);
+        var unsubscriber = source.Joiner.LinkTo(transformer);
+        return new(unsubscriber, transformer);
+    }
 
     /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
     /// <typeparam name="T1">Тип данных первого потока</typeparam>
@@ -251,10 +235,14 @@ public static class DataFlow
     /// <param name="source">Поток-источник</param>
     /// <param name="selector">Метод формирования набора элементов на основе каждого из элементов входного потока</param>
     /// <returns>Связь с созданным преобразователем</returns>
-    public static Link<Tuple<IList<T1>, IList<T2>>, TransformManyBlock<Tuple<IList<T1>, IList<T2>>, TResult>> SelectMany<T1, T2, TResult>(
+    public static Link<TResult, TransformManyBlock<Tuple<IList<T1>, IList<T2>>, TResult>> SelectMany<T1, T2, TResult>(
         this BatchedJoinBlockLink<T1, T2> source,
-        Func<Tuple<IList<T1>, IList<T2>>, IEnumerable<TResult>> selector) =>
-        source.Joiner.SetLinkTo(new TransformManyBlock<Tuple<IList<T1>, IList<T2>>, TResult>(selector));
+        Func<Tuple<IList<T1>, IList<T2>>, IEnumerable<TResult>> selector)
+    {
+        var transformer = new TransformManyBlock<Tuple<IList<T1>, IList<T2>>, TResult>(selector);
+        var unsubscriber = source.Joiner.LinkTo(transformer);
+        return new(unsubscriber, transformer);
+    }
 
     /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
     /// <typeparam name="TSource">Тип элементов входного потока</typeparam>
@@ -266,8 +254,13 @@ public static class DataFlow
     public static Link<TSource, TransformManyBlock<TSource, TResult>> SelectMany<TSource, TResult>(
         this ISourceBlock<TSource> source,
         Func<TSource, IEnumerable<TResult>> selector,
-        out Task TransformCompletion) =>
-        source.SetLinkTo(new TransformManyBlock<TSource, TResult>(selector), out TransformCompletion);
+        out Task TransformCompletion)
+    {
+        var transformer = new TransformManyBlock<TSource, TResult>(selector);
+        var unsubscriber = source.LinkTo(transformer);
+        TransformCompletion = transformer.Completion;
+        return new(unsubscriber, transformer);
+    }
 
     /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
     /// <typeparam name="TSource">Тип элементов входного потока</typeparam>
@@ -282,7 +275,7 @@ public static class DataFlow
         Func<TSource, IEnumerable<TResult>> selector,
         out Task TransformCompletion)
         where TSourceBlock : ITargetBlock<TSource>, ISourceBlock<TSource> =>
-        source.Result.SetLinkTo(new TransformManyBlock<TSource, TResult>(selector), out TransformCompletion);
+        source.Result.SelectMany(selector, out TransformCompletion);
 
     /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
     /// <typeparam name="T1">Тип данных первого потока</typeparam>
@@ -296,7 +289,7 @@ public static class DataFlow
         this JoinBlockLink<T1, T2> source,
         Func<Tuple<T1, T2>, IEnumerable<TResult>> selector,
         out Task TransformCompletion) =>
-        source.Joiner.SetLinkTo(new TransformManyBlock<Tuple<T1, T2>, TResult>(selector), out TransformCompletion);
+        source.Joiner.SelectMany(selector, out TransformCompletion);
 
     /// <summary>Преобразование элемента входного потока в набор элементов выходного потока</summary>
     /// <typeparam name="T1">Тип данных первого потока</typeparam>
@@ -310,15 +303,19 @@ public static class DataFlow
         this BatchedJoinBlockLink<T1, T2> source,
         Func<Tuple<IList<T1>, IList<T2>>, IEnumerable<TResult>> selector,
         out Task TransformCompletion) =>
-        source.Joiner.SetLinkTo(new TransformManyBlock<Tuple<IList<T1>, IList<T2>>, TResult>(selector), out TransformCompletion);
+        source.Joiner.SelectMany(selector, out TransformCompletion);
 
     /// <summary>Объединение элементов потока в пакеты указанного размера</summary>
     /// <typeparam name="T">Тип элементов потока</typeparam>
     /// <param name="source">Поток-источник данных</param>
     /// <param name="BatchSize">Размер пакета</param>
     /// <returns>Связь с созданным новым потоком-агрегатором</returns>
-    public static Link<T, BatchBlock<T>> Aggregate<T>(this ISourceBlock<T> source, int BatchSize) =>
-        source.SetLinkTo(new BatchBlock<T>(BatchSize));
+    public static Link<T, BatchBlock<T>> Aggregate<T>(this ISourceBlock<T> source, int BatchSize)
+    {
+        var transformer = new BatchBlock<T>(BatchSize);
+        var unsubscriber = source.LinkTo(transformer);
+        return new(unsubscriber, transformer);
+    }
 
     /// <summary>Объединение элементов потока в пакеты указанного размера</summary>
     /// <typeparam name="T">Тип элементов потока</typeparam>
@@ -359,8 +356,12 @@ public static class DataFlow
     /// <param name="source">Поток-источник элементов над которыми требуется выполнить действие</param>
     /// <param name="action">Выполняемое действие</param>
     /// <returns>Связь с вновь созданным обработчиком элементов потока</returns>
-    public static Link<T, ActionBlock<T>> ForEach<T>(this ISourceBlock<T> source, Action<T> action) =>
-        source.SetLinkTo(new ActionBlock<T>(action));
+    public static Link<T, ActionBlock<T>> ForEach<T>(this ISourceBlock<T> source, Action<T> action)
+    {
+        var action_block = new ActionBlock<T>(action);
+        var unsubscriber = source.LinkTo(action_block);
+        return new(unsubscriber, action_block);
+    }
 
     /// <summary>Выполнение указанного действия для всех элементов потока</summary>
     /// <typeparam name="T">Тип элементов потока</typeparam>
