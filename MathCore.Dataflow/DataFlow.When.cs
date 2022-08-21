@@ -13,7 +13,7 @@ public static partial class DataFlow
     /// <param name="source">Поток-источник элементов</param>
     /// <param name="predicate">Условие, при выполнении которого элемент потока-источника попадёт в выходной поток</param>
     /// <returns>Связь с созданным новым буферизованным потоком, элементы которого будут отфильтрованными из исходного потока указанным способом</returns>
-    public static Link<T, ISourceBlock<T>> When<T>(this ISourceBlock<T> source, Predicate<T> predicate)
+    public static Link<T, BufferBlock<T>> When<T>(this ISourceBlock<T> source, Predicate<T> predicate)
     {
         if (source is not BroadcastBlock<T>) 
             return source.Braodcast().When(predicate);
@@ -29,7 +29,7 @@ public static partial class DataFlow
     /// <param name="source">Поток-источник элементов</param>
     /// <param name="predicate">Условие, при выполнении которого элемент потока-источника попадёт в выходной поток</param>
     /// <returns>Связь с созданным новым буферизованным потоком, элементы которого будут отфильтрованными из исходного потока указанным способом</returns>
-    public static Link<T, ISourceBlock<T>> When<T, TSourceBlock>(
+    public static Link<T, BufferBlock<T>> When<T, TSourceBlock>(
         this Link<T, TSourceBlock> source,
         Predicate<T> predicate)
         where TSourceBlock : ISourceBlock<T> =>
@@ -41,7 +41,7 @@ public static partial class DataFlow
     /// <param name="source">Поток-источник элементов</param>
     /// <param name="predicate">Условие, при выполнении которого элемент потока-источника попадёт в выходной поток</param>
     /// <returns>Связь с созданным новым буферизованным потоком, элементы которого будут отфильтрованными из исходного потока указанным способом</returns>
-    public static Link<Tuple<T1, T2>, ISourceBlock<Tuple<T1, T2>>> When<T1, T2>(
+    public static Link<Tuple<T1, T2>, BufferBlock<Tuple<T1, T2>>> When<T1, T2>(
         this JoinBlockLink<T1, T2> source,
         Predicate<Tuple<T1, T2>> predicate) =>
         source.Joiner.When(predicate);
@@ -52,7 +52,7 @@ public static partial class DataFlow
     /// <param name="source">Поток-источник элементов</param>
     /// <param name="predicate">Условие, при выполнении которого элемент потока-источника попадёт в выходной поток</param>
     /// <returns>Связь с созданным новым буферизованным потоком, элементы которого будут отфильтрованными из исходного потока указанным способом</returns>
-    public static Link<Tuple<IList<T1>, IList<T2>>, ISourceBlock<Tuple<IList<T1>, IList<T2>>>> When<T1, T2>(
+    public static Link<Tuple<IList<T1>, IList<T2>>, BufferBlock<Tuple<IList<T1>, IList<T2>>>> When<T1, T2>(
         this BatchedJoinBlockLink<T1, T2> source,
         Predicate<Tuple<IList<T1>, IList<T2>>> predicate) =>
         source.Joiner.When(predicate);
