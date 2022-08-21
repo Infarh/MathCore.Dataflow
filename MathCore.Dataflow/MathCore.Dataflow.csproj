@@ -10,9 +10,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>0.0.2</Version>
+    <Version>0.0.3</Version>
     <PackageReleaseNotes>
-      Расширение fluent-интерфейса на асинхронные операции
+      Коррекция работы метода When
     </PackageReleaseNotes>
   </PropertyGroup>
 

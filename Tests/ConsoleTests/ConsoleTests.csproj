@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Using Include="System.Threading.Tasks.Dataflow"/>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\MathCore.Dataflow\MathCore.Dataflow.csproj" />
   </ItemGroup>
 
