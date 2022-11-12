@@ -15,6 +15,7 @@ input.Post("qwe ewq");
 input.Post("qwe1 333");
 input.Post("qwe2 333 44 555 666");
 input.Post("qwe3 123 321 123");
+input.Complete();
 
 
 Console.WriteLine("Complete");
