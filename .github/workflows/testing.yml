@@ -2,23 +2,42 @@ name: Testing
 
 on: [push]
 
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+
 jobs:
-  test:
-    name: Test on .NET Core
+  build:
+    name: Build
     runs-on: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 7.0.x
+          
+      - name: Cache NuGet  
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget
+          
+      - name: Restore
+        run: |
+          dotnet restore MathCore.Dataflow
+          dotnet restore Tests/MathCore.Dataflow.Tests
 
       - name: Building
         run: |
-          dotnet build MathCore.Dataflow --nologo
-          dotnet build Tests/MathCore.Dataflow.Tests --nologo
+          dotnet build MathCore.Dataflow --no-restore
+          dotnet build Tests/MathCore.Dataflow.Tests --no-restore
 
       - name: Run Tests
-        run: dotnet test Tests/MathCore.Dataflow.Tests --no-build --nologo
+        run: dotnet test Tests/MathCore.Dataflow.Tests --no-build
