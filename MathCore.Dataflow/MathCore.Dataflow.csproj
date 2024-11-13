@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>0.0.3.1</Version>
+    <Version>0.0.4</Version>
     <PackageReleaseNotes>
       Коррекция работы метода When
     </PackageReleaseNotes>
@@ -34,7 +34,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Using Include="System.Threading.Tasks.Dataflow"/>
+    <Using Include="System.Threading.Tasks.Dataflow" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
@@ -46,7 +46,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="7.0.0" />
+    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="9.0.0" />
   </ItemGroup>
 
 </Project>
